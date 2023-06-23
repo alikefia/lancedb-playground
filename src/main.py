@@ -37,7 +37,7 @@ DB_TABLE = "100k"
 DB_TABLE_SIZE = 100000
 
 Q_PATH = "query"
-Q_SIZE = 1000
+Q_SIZE = 100
 Q_V = "v.parquet"
 Q_KNN = "knn.parquet"
 Q_ANN = "ann.parquet"
@@ -117,14 +117,21 @@ def q_process(what: str):
 
 
 @app.command()
+def create_index():
+    start = datetime.now()
+    table = get_db().open_table(DB_TABLE)
+    table.create_index(num_sub_vectors=8)
+    print(f"created index in {(datetime.now() - start).total_seconds():.2f} sec")
+
+
+@app.command()
 def q_knn():
     q_process("knn")
 
 
 @app.command()
 def q_ann():
-    table = get_db().open_table(DB_TABLE)
-    table.create_index()
+    create_index()
     q_process("ann")
 
 
