@@ -1,6 +1,7 @@
 import logging
 import os
-from datetime import datetime
+import time
+from functools import wraps
 from pathlib import Path
 from random import random, seed
 
@@ -9,38 +10,41 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import typer
 
-log_level = os.environ.get("LOG_LEVEL", None)
-if log_level is not None:
-    logging.basicConfig(
-        level=getattr(logging, log_level.upper()),
-        format="%(asctime)s %(levelname)s | %(processName)s %(name)s | %(message)s",
-    )
+log_level = os.environ.get("LOG_LEVEL", "info")
+logging.basicConfig(
+    level=getattr(logging, log_level.upper()),
+    format="%(asctime)s %(levelname)s | %(processName)s %(name)s | %(message)s",
+)
 
 
 logger = logging.getLogger(__name__)
 app = typer.Typer()
 
 
-@app.callback()
-def main(log_level: str = None):
-    if log_level is not None:
-        logging.basicConfig(
-            level=getattr(logging, log_level.upper()),
-            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        )
-
-
 V_SIZE = 256
 
 DB_PATH = "benchmark"
-DB_TABLE = "100k"
-DB_TABLE_SIZE = 100000
+DB_TABLE = "vectors"
+DB_TABLE_SIZE = os.environ.get("DB_TABLE_SIZE", 100000)
 
 Q_PATH = "query"
-Q_SIZE = 100
+Q_SIZE = os.environ.get("Q_SIZE", 100)
 Q_V = "v.parquet"
 Q_KNN = "knn.parquet"
 Q_ANN = "ann.parquet"
+
+
+def timeit(func):
+    @wraps(func)
+    def f(*args, **kwargs):
+        start_time = time.perf_counter()
+        result = func(*args, **kwargs)
+        end_time = time.perf_counter()
+        total_time = end_time - start_time
+        logger.info(f"{func.__name__} {args} done in {total_time:.2f} secs")
+        return result
+
+    return f
 
 
 def get_db():
@@ -78,7 +82,7 @@ def db_init(n: int = DB_TABLE_SIZE):
 
 @app.command()
 def db_info():
-    print(get_db().open_table(DB_TABLE).head(10))
+    logger.debug(get_db().open_table(DB_TABLE).head(10))
 
 
 @app.command()
@@ -93,12 +97,12 @@ def q_init(n: int = Q_SIZE):
 
 @app.command()
 def q_info():
-    print(pq.read_table(get_q()))
+    logger.debug(pq.read_table(get_q()))
 
 
+@timeit
 def q_process(what: str):
     table = get_db().open_table(DB_TABLE)
-    start = datetime.now()
     r = pa.Table.from_pylist(
         [
             {
@@ -112,16 +116,15 @@ def q_process(what: str):
             for v in pq.read_table(get_q()).to_pylist()
         ]
     )
-    print(f"{what} processed in {(datetime.now() - start).total_seconds():.2f} sec")
     pq.write_table(r, get_q(what))
 
 
 @app.command()
+@timeit
 def create_index():
-    start = datetime.now()
-    table = get_db().open_table(DB_TABLE)
-    table.create_index(num_sub_vectors=8)
-    print(f"created index in {(datetime.now() - start).total_seconds():.2f} sec")
+    get_db().open_table(DB_TABLE).create_index(
+        num_sub_vectors=8
+    )  # TODO :avoid hard coded params
 
 
 @app.command()
