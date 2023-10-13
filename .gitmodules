@@ -1,6 +1,0 @@
-[submodule "deps/lance"]
-	path = deps/lance
-	url = git@github.com:alikefia/lance.git
-[submodule "deps/lancedb"]
-	path = deps/lancedb
-	url = git@github.com:alikefia/lancedb.git

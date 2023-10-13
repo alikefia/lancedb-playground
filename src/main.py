@@ -122,9 +122,7 @@ def q_process(what: str):
 @app.command()
 @timeit
 def create_index():
-    get_db().open_table(DB_TABLE).create_index(
-        num_sub_vectors=8
-    )  # TODO :avoid hard coded params
+    get_db().open_table(DB_TABLE).create_index(num_sub_vectors=8)
 
 
 @app.command()
