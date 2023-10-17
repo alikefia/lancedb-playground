@@ -1,5 +1,5 @@
 isort
-maturin
+maturin >=0.14, <0.15
 python-lsp-black
 python-lsp-ruff
 python-lsp-server
