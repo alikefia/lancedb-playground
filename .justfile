@@ -2,9 +2,8 @@
 fmt:
     #!/usr/bin/env bash
     just --unstable --fmt
-    isort "${ROOT}/src"
-    black "${ROOT}/src"
-    ruff check "${ROOT}/src"
+    ruff format py
+    ruff check --fix py
 
 # install deps
 deps:
@@ -12,23 +11,22 @@ deps:
     pip install -U pip
     pip install -U -r requirements.txt
     pip install -U -r requirements.dev.txt
-    (cd deps/lance/python && maturin develop)
-    (cd deps/lancedb/python && pip install -e .)
 
 @build:
     (cd deps/lance/python && maturin develop)
+    (cd deps/lancedb/python && pip install -e .)
 
 # run main python commandline
-@do *ARGS:
-    python "${ROOT}/src/main.py" {{ ARGS }}
+@run *ARGS:
+    python "${ROOT}/py/main.py" {{ ARGS }}
 
 # make a full test
 e2e:
     #!/usr/bin/env bash
     rm -rf "${ROOT}/data"
-    just do db-init
-    just do db-info
-    just do q-init
-    just do q-info
-    just do q-knn
-    just do q-ann
+    just run db-init
+    just run db-info
+    just run q-init
+    just run q-info
+    just run q-knn
+    just run q-ann
