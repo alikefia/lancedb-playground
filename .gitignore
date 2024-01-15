@@ -1,7 +1,5 @@
-.direnv
-.azure
-.local.envrc
 __pycache__
 
+/.venv
+/.azure
 /data
-/poetry.lock

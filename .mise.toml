@@ -1,0 +1,47 @@
+[env]
+DATA = "{{config_root}}/data"
+
+AZURE = 0
+AZURE_CONFIG_DIR = "{{config_root}}/.azure"
+AZURE_STORAGE_ACCOUNT_NAME = "lancedbstore"
+AZURE_STORAGE_ACCOUNT_KEY = "xxx"
+AZURE_STORAGE_CONTAINER = "lancedb"
+
+[tools]
+python = { version = "3.12", virtualenv = "{{config_root}}/.venv" }
+# protobuf to manage here
+
+[tasks.fmt]
+description = "format and lint code"
+run = ["ruff format py", "ruff check --fix py"]
+sources = ["py/**"]
+
+[tasks.deps]
+description = "install deps"
+run = [
+  "pip install -U pip",
+  "pip install -U -r requirements.txt",
+  "pip install -U -r requirements.dev.txt",
+]
+
+[tasks.link]
+description = "link lancedb (to do once)"
+run = "pip install -e ."
+dir = "deps/lancedb/python"
+
+[tasks.build]
+description = "build lance"
+run = "maturin develop"
+dir = "deps/lance/python"
+
+[tasks.e2e]
+description = "run e2e test"
+run = [
+  "rm -rf data",
+  "python py/main.py db-init",
+  "python py/main.py db-info",
+  "python py/main.py q-init",
+  "python py/main.py q-info",
+  "python py/main.py q-knn",
+  "python py/main.py q-ann",
+]
