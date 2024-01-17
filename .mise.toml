@@ -9,7 +9,7 @@ AZURE_STORAGE_CONTAINER = "lancedb"
 
 [tools]
 python = { version = "3.12", virtualenv = "{{config_root}}/.venv" }
-# protobuf to manage here
+protoc = { version = "latest" }
 
 [tasks.fmt]
 description = "format and lint code"
